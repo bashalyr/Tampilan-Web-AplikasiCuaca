@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bumi Cuaca</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #171c28;
+      color: #ffffff;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .clock-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .clock {
+      font-size: 48px;
+      color: #ffffff;
+    }
+
+    .weather-container {
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    .search-results {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .weather-card {
+      background-color: #24344d;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      display: inline-block;
+      margin: 20px;
+      padding: 20px;
+      text-align: left;
+      max-width: 300px; /* Menyesuaikan lebar kartu cuaca */
+    }
+
+    .weather-card h2 {
+      font-size: 24px;
+      margin-top: 0;
+      color: #ffffff;
+    }
+
+    .weather-card p {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #ffffff;
+      text-align: left;
+    }
+
+    .search-input {
+      width: 200px;
+      padding: 5px;
+      font-size: 16px;
+      background-color: #304259;
+      color: #ffffff;
+      border: none;
+      border-radius: 3px;
+      margin-right: 10px;
+    }
+
+    .search-button {
+      padding: 5px 10px;
+      font-size: 16px;
+      background-color: #304259;
+      color: #ffffff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .search-button:active {
+      background-color: #24344d;
+    }
+
+    /* Dark Blue Theme */
+    body.dark-blue {
+      background-color: #1c2336;
+    }
+
+    body.dark-blue h1 {
+      color: #ffffff;
+    }
+
+    body.dark-blue .clock {
+      color: #ffffff;
+    }
+
+    body.dark-blue .weather-card {
+      background-color: #304259;
+    }
+
+    /* Light Blue Theme */
+    body.light-blue {
+      background-color: #f0f5ff;
+    }
+
+    body.light-blue h1 {
+      color: #000000;
+    }
+
+    body.light-blue .clock {
+      color: #000000;
+    }
+
+    body.light-blue .weather-card {
+      background-color: #c3d9ff;
+    }
+
+    /* Notifications */
+    .notification-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 300px;
+    }
+
+    .notification {
+      background-color: #24344d;
+      color: #ffffff;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      margin-bottom: 10px;
+    }
+
+    /* Search History */
+    .search-history-container {
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    .search-history-list {
+      list-style-type: none;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center; /* Menyatukan riwayat pencarian menjadi 1 kolom */
+      max-width: 300px; /* Membatasi lebar riwayat pencarian */
+      margin: 0 auto; /* Pusatkan riwayat pencarian */
+      overflow-y: auto; /* Hanya riwayat yang dapat di-scroll */
+      max-height: 130px; /* Batasan tinggi riwayat */
+    }
+
+    .search-history-item {
+      margin: 5px;
+      display: block; /* Mengubah menjadi blok agar memiliki warna yang konsisten */
+    }
+
+    .search-history-item a {
+      color: #ffffff;
+      text-decoration: none; /* Menghapus garis bawah pada teks riwayat pencarian */
+      cursor: pointer;
+      padding: 3px 6px;
+      display: block; /* Mengubah menjadi blok agar dapat mengisi seluruh kolom */
+    }
+
+    .search-history-item a:hover {
+      color: #c3d9ff;
+    }
+
+    .clear-history-button {
+      padding: 5px 10px;
+      font-size: 16px;
+      background-color: #304259;
+      color: #ffffff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .clear-history-button:active {
+      background-color: #24344d;
+    }
+  </style>
+</head>
+
+<body class="dark-blue">
+  <h1>Cuaca Bumi</h1>
+  <div class="clock-container">
+    <div class="clock" id="clock"></div>
+  </div>
+  <div class="weather-container">
+    <input type="text" id="city-input" class="search-input" placeholder="Masukkan nama kota">
+    <button class="search-button" onclick="searchWeather()" onmousedown="highlightButton()">Cari</button>
+  </div>
+  <div class="search-results" id="weather-results"></div>
+  <div class="notification-container" id="notification-container"></div>
+  <div class="search-history-container">
+    <h2>Riwayat Pencarian</h2>
+    <ul class="search-history-list" id="search-history-list"></ul>
+    <button class="clear-history-button" onclick="clearSearchHistory()">Hapus Riwayat</button>
+  </div>
+
+  <script>
+    // Fitur A - Jam Digital
+    function updateClock() {
+      const clockElement = document.getElementById('clock');
+      const currentTime = new Date();
+      const hours = currentTime.getHours().toString().padStart(2, '0');
+      const minutes = currentTime.getMinutes().toString().padStart(2, '0');
+      const seconds = currentTime.getSeconds().toString().padStart(2, '0');
+      clockElement.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    setInterval(updateClock, 1000);
+
+    // Fitur B - Pencarian Cuaca
+    function searchWeather() {
+      const apiKey = 'MASUKAN_API_KEY_GRATIS_DARI_OPENWHEATERMAP'; // Ganti dengan API key cuaca yang valid
+      const cityInput = document.getElementById('city-input').value;
+
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cityInput}&appid=${apiKey}`)
+        .then(response => response.json())
+        .then(data => {
+          displayWeather(data);
+          addSearchHistory(cityInput);
+        })
+        .catch(error => {
+          console.log('Terjadi kesalahan:', error);
+        });
+    }
+
+    function displayWeather(data) {
+      const weatherResults = document.getElementById('weather-results');
+      weatherResults.innerHTML = '';
+
+      const weatherCard = document.createElement('div');
+      weatherCard.classList.add('weather-card');
+
+      const cityName = document.createElement('h2');
+      cityName.textContent = `Cuaca di ${data.name}, ${data.sys.country}`;
+      weatherCard.appendChild(cityName);
+
+      const temperature = document.createElement('p');
+      temperature.textContent = `Suhu: ${Math.round(data.main.temp - 273.15)} °C`;
+      weatherCard.appendChild(temperature);
+
+      const feelsLike = document.createElement('p');
+      feelsLike.textContent = `Terasa Seperti: ${Math.round(data.main.feels_like - 273.15)} °C`;
+      weatherCard.appendChild(feelsLike);
+
+      const humidity = document.createElement('p');
+      humidity.textContent = `Kelembaban: ${data.main.humidity}%`;
+      weatherCard.appendChild(humidity);
+
+      const description = document.createElement('p');
+      description.textContent = `Deskripsi: ${data.weather[0].description}`;
+      weatherCard.appendChild(description);
+
+      const windSpeed = document.createElement('p');
+      windSpeed.textContent = `Kecepatan Angin: ${data.wind.speed} m/s`;
+      weatherCard.appendChild(windSpeed);
+
+      const sunrise = document.createElement('p');
+      sunrise.textContent = `Sunrise: ${new Date(data.sys.sunrise * 1000).toLocaleTimeString()}`;
+      weatherCard.appendChild(sunrise);
+
+      const sunset = document.createElement('p');
+      sunset.textContent = `Sunset: ${new Date(data.sys.sunset * 1000).toLocaleTimeString()}`;
+      weatherCard.appendChild(sunset);
+
+      weatherResults.appendChild(weatherCard);
+    }
+
+    function highlightButton() {
+      const searchButton = document.querySelector('.search-button');
+      searchButton.style.backgroundColor = '#24344d';
+
+      setTimeout(() => {
+        searchButton.style.backgroundColor = '#304259';
+      }, 100);
+    }
+
+    // Fitur C - Pemberitahuan
+    function showNotification(message) {
+      const notificationContainer = document.getElementById('notification-container');
+      const notification = document.createElement('div');
+      notification.classList.add('notification');
+      notification.textContent = message;
+      notificationContainer.appendChild(notification);
+
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    }
+
+    // Fitur D - Riwayat Pencarian
+    function addSearchHistory(city) {
+      const searchHistoryList = document.getElementById('search-history-list');
+      const searchHistoryItem = document.createElement('li');
+      const searchHistoryLink = document.createElement('a');
+      searchHistoryLink.textContent = city;
+      searchHistoryLink.addEventListener('click', () => {
+        document.getElementById('city-input').value = city;
+        searchWeather();
+      });
+      searchHistoryItem.classList.add('search-history-item');
+      searchHistoryItem.appendChild(searchHistoryLink);
+      searchHistoryList.appendChild(searchHistoryItem);
+    }
+
+    function clearSearchHistory() {
+      const searchHistoryList = document.getElementById('search-history-list');
+      searchHistoryList.innerHTML = '';
+    }
+  </script>
+</body>
+
+</html>
